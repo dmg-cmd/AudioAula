@@ -15,6 +15,9 @@ dist/
 # Configuración local del usuario
 config.json
 
+# Borradores de iconos locales
+docs/iconos/
+
 # Archivos del sistema
 .DS_Store
 Thumbs.db

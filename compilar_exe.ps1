@@ -20,7 +20,15 @@ if (-not $pyinstallerOk) {
 }
 
 Write-Host "Compilando AudioAula.exe..." -ForegroundColor Cyan
-python -m PyInstaller --noconfirm --clean --onefile --windowed --name "AudioAula" app.py
+$pyiArgs = @("--noconfirm", "--clean", "--onefile", "--windowed", "--name", "AudioAula")
+if (Test-Path "assets\AudioAula.ico") {
+    $pyiArgs += @("--icon", "assets\AudioAula.ico")
+}
+if (Test-Path "assets") {
+    $pyiArgs += @("--add-data", "assets;assets")
+}
+$pyiArgs += "app.py"
+python -m PyInstaller @pyiArgs
 
 $distExe = Join-Path $PSScriptRoot "dist\AudioAula.exe"
 $rootExe = Join-Path $PSScriptRoot "AudioAula.exe"

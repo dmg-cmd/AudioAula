@@ -1,0 +1,115 @@
+name: Compilar y publicar Release (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Etiqueta del Release a crear o actualizar (ej. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Compilar AudioAula.exe y publicar Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar código fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verificar sintaxis de Python
+        shell: pwsh
+        run: python -m py_compile app.py converter_core.py
+
+      - name: Instalar PyInstaller
+        shell: pwsh
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Compilar AudioAula.exe con icono y recursos
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name "AudioAula" --icon "assets\AudioAula.ico" --add-data "assets;assets" app.py
+          if (-not (Test-Path "dist\AudioAula.exe")) {
+            throw "No se generó dist\AudioAula.exe"
+          }
+
+      - name: Generar suma de verificación SHA-256
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Path "dist\AudioAula.exe" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  AudioAula.exe" | Set-Content -Path "dist\AudioAula.exe.sha256" -Encoding ASCII
+          Write-Host "SHA-256: $hash"
+
+      - name: Guardar artefactos de compilación
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioAula-Windows
+          path: |
+            dist/AudioAula.exe
+            dist/AudioAula.exe.sha256
+
+      - name: Crear o actualizar GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $tag = "${{ github.ref_name }}"
+          } else {
+            $tag = "${{ inputs.tag }}"
+          }
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            throw "No se pudo determinar la etiqueta (tag) del Release."
+          }
+
+          $shaLine = (Get-Content -Path "dist\AudioAula.exe.sha256" -Raw).Trim()
+          $notes = @(
+            "# AudioAula $tag"
+            ""
+            "Herramienta docente libre y de código abierto (Licencia MIT) para **extraer, convertir, recortar y separar audio** desde archivos de video o pistas de audio usando **FFmpeg**."
+            ""
+            "## Descarga rápida (Windows)"
+            ""
+            "- Descarga **``AudioAula.exe``** desde los adjuntos (*Assets*) de este lanzamiento y ejecútalo directamente (no requiere instalar Python)."
+            "- **Requisito libre obligatorio — FFmpeg**: instala la versión gratuita de código abierto ejecutando en PowerShell:"
+            '  ```powershell'
+            "  winget install Gyan.FFmpeg"
+            '  ```'
+            '  También puedes indicar la ruta de `ffmpeg.exe` desde el botón **"Configurar ruta de FFmpeg..."** dentro de la aplicación.'
+            ""
+            "## Verificación de integridad (SHA-256)"
+            ""
+            '```text'
+            $shaLine
+            '```'
+            ""
+            "## Documentación"
+            ""
+            "- Consulta el [Manual de Uso para Docentes](https://github.com/dmg-cmd/AudioAula/blob/main/docs/MANUAL_USO.md) para aprender todas las funciones paso a paso."
+          )
+          $notes | Set-Content -Path "release_notes.md" -Encoding UTF8
+
+          $prevPref = $ErrorActionPreference
+          $ErrorActionPreference = "Continue"
+          cmd /c "gh release view $tag >nul 2>&1"
+          $releaseExists = ($LASTEXITCODE -eq 0)
+          $ErrorActionPreference = $prevPref
+
+          if ($releaseExists) {
+            gh release upload $tag "dist\AudioAula.exe" "dist\AudioAula.exe.sha256" --clobber
+          } else {
+            gh release create $tag "dist\AudioAula.exe" "dist\AudioAula.exe.sha256" --title "AudioAula $tag" --notes-file "release_notes.md"
+          }

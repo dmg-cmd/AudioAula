@@ -1,6 +1,13 @@
+<p align="center">
+  <img src="assets/AudioAula.png" alt="Icono de AudioAula" width="128" />
+</p>
+
 # AudioAula
 
 **AudioAula** es una aplicación de escritorio gratuita y de código abierto (FOSS) escrita en Python (`tkinter`) para **extraer, convertir, recortar y separar audio** a partir de archivos de video o pistas de audio utilizando **FFmpeg**. Está diseñada pensando en las necesidades prácticas de docentes y estudiantes, con una interfaz clara en español y sin dependencias externas de `pip`.
+
+- 📦 **Descarga directa para Windows**: obtén `AudioAula.exe` desde la página de [Releases de GitHub](https://github.com/dmg-cmd/AudioAula/releases).
+- 📖 **Documentación completa**: consulta el [Manual de Uso para Docentes](docs/MANUAL_USO.md), el [Índice de Documentación](docs/README.md) y el [Historial y Guía Técnica](docs/HISTORIAL.md).
 
 ---
 
@@ -126,6 +133,14 @@ Si modificas el código fuente y quieres generar `AudioAula.exe` localmente usan
 ```
 
 El script verificará o instalará PyInstaller automáticamente y generará `AudioAula.exe` en la carpeta raíz del proyecto (y dentro de `dist/`).
+
+---
+
+## Documentación
+
+- [Índice de documentación (`docs/README.md`)](docs/README.md): estructura del repositorio y guía de publicación de versiones.
+- [Manual de Uso para Docentes (`docs/MANUAL_USO.md`)](docs/MANUAL_USO.md): guía paso a paso de conversión por lotes, editor visual de ondas, atajos y solución de problemas.
+- [Historial y Guía Técnica (`docs/HISTORIAL.md`)](docs/HISTORIAL.md): cronología de hitos, arquitectura de `app.py` y `converter_core.py`, decisiones de diseño y lineamientos para futuras reformas.
 
 ---
 

@@ -7,6 +7,7 @@ import queue
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -94,6 +95,12 @@ EDITOR_SPEED_OPTIONS: list[tuple[float, str]] = [
 
 EDITOR_COPY_LABEL: str = "Copia rápida sin recodificar (-c:a copy)"
 _SUBPROCESS_FLAGS: int = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+
+def get_asset_path(filename: str) -> Path:
+    """Devuelve la ruta de un recurso de la aplicación (script o ejecutable PyInstaller)."""
+    base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base_dir / "assets" / filename
 
 
 def build_atempo_filter(speed: float) -> Optional[str]:
@@ -609,6 +616,8 @@ class AudioExtractorApp:
         self.root.title("AudioAula — Extractor y Editor de Audio (FFmpeg)")
         self.root.geometry("1120x910")
         self.root.minsize(980, 780)
+        self._window_icon_photo: Optional[tk.PhotoImage] = None
+        self._apply_window_icon()
 
         self.ui_queue: queue.Queue[tuple[str, tuple[object, ...]]] = queue.Queue()
         self.items: dict[str, QueueItem] = {}
@@ -726,6 +735,22 @@ class AudioExtractorApp:
 
         self.root.after(60, self._process_ui_queue)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _apply_window_icon(self) -> None:
+        """Aplica el icono de AudioAula a la ventana principal y diálogos secundarios."""
+        ico_path = get_asset_path("AudioAula.ico")
+        png_path = get_asset_path("AudioAula.png")
+        if os.name == "nt" and ico_path.is_file():
+            try:
+                self.root.iconbitmap(default=str(ico_path))
+            except tk.TclError:
+                pass
+        if png_path.is_file():
+            try:
+                self._window_icon_photo = tk.PhotoImage(file=str(png_path))
+                self.root.iconphoto(True, self._window_icon_photo)
+            except tk.TclError:
+                self._window_icon_photo = None
 
     def _configure_styles(self) -> None:
         style = ttk.Style(self.root)
