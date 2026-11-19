@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# Compilación PyInstaller y ejecutables (publicar en GitHub Releases)
+build/
+dist/
+*.spec
+*.exe
+
+# Configuración local del usuario
+config.json
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
